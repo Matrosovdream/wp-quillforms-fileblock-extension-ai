@@ -1,0 +1,147 @@
+.verification-done {
+    width: 100px;
+    display: block;
+    font-size: 15px;
+    line-height: 13px;
+}
+
+.omg abbr {
+    font-size: 15px!important;
+}
+
+.omg .tooltip {
+    font-size: 13px;
+}
+
+.dotted-underline {
+    border-bottom: 1px dotted #111;
+    text-decoration: none;
+    cursor: help;
+}
+
+#tooltip
+{
+    text-align: center;
+    color: #fff;
+    background: #111;
+    position: absolute;
+    z-index: 100;
+    padding: 15px;
+}
+
+.tooltip {
+    font-size: 13px;
+}
+    
+#tooltip:after /* triangle decoration */
+{
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #111;
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -10px;
+    margin-left: -10px;
+}
+
+#tooltip.top:after
+{
+    border-top-color: transparent;
+    border-bottom: 10px solid #111;
+    top: -20px;
+    bottom: auto;
+}
+
+#tooltip.left:after
+{
+    left: 10px;
+    margin: 0;
+}
+
+#tooltip.right:after
+{
+    right: 10px;
+    left: auto;
+    margin: 0;
+}
+
+
+/* -----------------------------------------
+  =Default css to make the demo more pretty
+-------------------------------------------- */
+
+body {
+    margin: 0 auto;
+    padding: 20px;
+    max-width: 1200px;
+    overflow-y: scroll;
+    font-family: "Open Sans", sans-serif;
+    font-weight: 400;
+    color: #777;
+    background-color: #f7f7f7;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  .content {
+    padding: 15px;
+    overflow: hidden;
+    background-color: #e7e7e7;
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+  
+  h1 {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #d8d8d8;
+    font-weight: 600;
+  }
+  
+  h1 span {
+    font-family: monospace, serif;
+  }
+  
+  h3 {
+    padding-bottom: 20px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), 0 2px 0 rgba(255, 255, 255, 0.9);
+  }
+  
+  p {
+    margin: 0;
+    padding: 10px 0;
+    color: #777;
+  }
+  
+  .clear {
+    clear: both;
+  }
+
+.image-ok {
+  text-decoration: none!important;
+  font-size: 18px!important;
+}
+  
+
+@media (max-width: 767px) {
+
+    .css-1iy0o1t {
+        display: none!important;
+    }
+
+    .omg abbr {
+        font-size: 12px !important;
+    }
+
+    .omg {
+        padding: 15px;
+        line-height: 18px;
+    }
+
+    .load-wrapp {
+        padding: 0 15px;
+    }
+
+}
