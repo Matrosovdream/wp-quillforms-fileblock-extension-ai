@@ -31,22 +31,36 @@ async function verifyImageAjax(url, question) {
 }
 
 async function verifyQuestions(img) {
-    showPreloader(img);
 
     try {
         // First check for multiple faces
         const facesCount = await verifyImageAjax(img.src, 'how many close up faces do you see?');
         if (Number(facesCount) > 1) {
             // More than one close-up face detected, skip further checks and show message
-            addVerificationMessage(img, 'Image not recommended', 'Group image');
+            addVerificationMessage(img, 'For best results use an image', 'with only one face visible');
         } else {
+
+            /*
+            var isScreenshot = await verifyImageAjax(img.src, 'Is it a screenshot?');
+            if( isScreenshot == 'yes' ) {
+                addVerificationMessage(img, 'Probably not the best. Why?', 'screenshot');
+                return;
+            }
+            */
+
+            var isPerson = await verifyImageAjax(img.src, 'Is there a person in the picture?');
+            if( isPerson == 'no' ) {
+                addVerificationMessage(img, 'For best results use an image', 'with the face clearly visible');
+                return;
+            }
+
             // If not more than one face, proceed with other verifications
             const promises = [
-                verifyImageAjax(img.src, 'Are the lips puckered?'),
-                verifyImageAjax(img.src, 'Is it a screenshot?'),
+                verifyImageAjax(img.src, 'Are the lips pickered?'),
+                verifyImageAjax(img.src, 'Does the person wear sunglasses?'),
                 verifyImageAjax(img.src, 'Is it an official document?'),
-                verifyImageAjax(img.src, 'Is the face cut off?'),
-                verifyImageAjax(img.src, 'Is there a person in the picture?'),
+                verifyImageAjax(img.src, 'Is the head covered?'),
+                //verifyImageAjax(img.src, 'Is there a person in the picture?'),
                 verifyImageAjax(img.src, 'Is the image blurry?'),
             ];
 
@@ -59,35 +73,36 @@ async function verifyQuestions(img) {
                     switch (index) {
                         case 0:
                             if (output === 'yes') {
-                                tooltips.push('Grimaces');
-                                message = 'Probably not the best. Why?';
+                                tooltips.push('with natural expression, no grimaces');
+                                message = 'For best results use an image';
                             }
                             break;
                         case 1:
                             if (output === 'yes') {
-                                tooltips.push('Screenshot');
-                                message = 'Probably not the best. Why?';
+                                tooltips.push('without sunglasses');
+                                message = 'For best results use an image';
                             }
                             break;
-                        case 5:
+                        case 2:
+                            if (output === 'yes') {
+                                tooltips.push('not a document or other');
+                                message = 'For best results use an image';
+                            }
+                            break;
+                        case 3:
+                            if (output === 'yes') {
+                                tooltips.push('with your face and head uncovered');
+                                message = 'For best results use an image';
+                            }
+                            break;
+                        case 4:
                             if (output === 'yes') {
                                 tooltips.push('Blurry image');
                                 message = 'Probably not the best. Why?';
                             }
                             break;
-                        case 2:
-                            if (output === 'yes') {
-                                tooltips.push('Document or other');
-                                message = 'Image not recommended';
-                            }
-                            break;
-                        case 3:
-                        case 4:
-                            if (output === 'yes') {
-                                tooltips.push('Face covered/cut off');
-                                message = 'Image not recommended';
-                            }
-                            break;
+                        case 5:
+                        
                     }
                 }
             });
@@ -106,7 +121,8 @@ async function verifyQuestions(img) {
     } catch (error) {
         console.error('Verification error:', error);
     } finally {
-        removeElementById("image-loading");
+        removePreloader(img);
+        //removeElementById("image-loading");
     }
 }
 
@@ -123,14 +139,14 @@ function addVerificationMessage(element, message, tooltip) {
     divElement.classList.add('omg');
 
     // Create an abbr element with the specified title and class
-    const abbrElement = document.createElement('abbr');
-    abbrElement.title = tooltip;
-    abbrElement.rel = 'tooltip';
+    const abbrElement = document.createElement('p');
+    //abbrElement.title = tooltip;
+    //abbrElement.rel = 'tooltip';
 
     if( tooltip == '' ) {
         abbrElement.classList.add('image-ok');
     } else {
-        abbrElement.classList.add('dotted-underline');
+        //abbrElement.classList.add('dotted-underline');
     }
 
     abbrElement.textContent = message; // Set the text content to the provided message
@@ -142,7 +158,7 @@ function addVerificationMessage(element, message, tooltip) {
     // Create an abbr element with the specified title and class
     const abbrElement2 = document.createElement('div');
     abbrElement2.title = tooltip;
-    abbrElement2.rel = 'tooltip';
+    //abbrElement2.rel = 'tooltip';
     abbrElement2.classList.add('tooltip');
     abbrElement2.textContent = tooltip; // Set the text content to the provided message
 
@@ -181,11 +197,9 @@ const observerCallback = async function (mutationsList, observer) {
                 if (node.nodeType === 1 && node.classList.contains('css-3pnu4s')) {
                     //const img = node;
 
+                    showPreloader(node);  // Show preloader
                     imageQueue.push(node);  // Add new image to the queue
                     processQueue();  // Process the queue
-
-                    //addVerificationMessage(img, 'test')
-                    //verifyQuestions(img);
 
                 }
             }
@@ -215,7 +229,7 @@ function showPreloader(element) {
     letterHolderDiv.classList.add('letter-holder');
 
     // Create div elements with class "letter" for each letter in "Loading..."
-    const loadingText = "Loading...";
+    const loadingText = "Quality-check";
     for (let i = 0; i < loadingText.length; i++) {
         const letterDiv = document.createElement('div');
         letterDiv.classList.add('l-' + (i + 1));
@@ -237,6 +251,12 @@ function showPreloader(element) {
     var ver_block = element.parentNode.parentNode.parentNode.getElementsByClassName('css-1iy0o1t')[0];
     ver_block.parentNode.insertBefore(divElement, ver_block.nextSibling);
 
+}
+
+
+function removePreloader(element) {
+    const preloader = element.parentNode.parentNode.parentNode.querySelector('.load-wrapp');
+    if (preloader) { preloader.remove(); }
 }
 
 

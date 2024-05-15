@@ -5,12 +5,23 @@
     line-height: 13px;
 }
 
+.omg {
+  width: 250px;
+}
+
 .omg abbr {
     font-size: 15px!important;
 }
 
+.omg p {
+  font-size: 15px;
+  margin: 0;
+  padding: 0;
+  line-height: 14px;
+}
+
 .omg .tooltip {
-    font-size: 13px;
+    font-size: 15px;
 }
 
 .dotted-underline {
@@ -135,13 +146,32 @@ body {
         font-size: 12px !important;
     }
 
+    .omg p {
+        font-size: 12px;
+    }
+
+    .omg .tooltip {
+      font-size: 12px;
+      line-height: unset;
+    }
+
     .omg {
-        padding: 15px;
-        line-height: 18px;
+      padding: 15px;
+      line-height: 18px;
+      margin-left: -25px;
+      width: 121px;
     }
 
     .load-wrapp {
         padding: 0 15px;
+    }
+    
+    .css-erpz5u {
+      padding: 5px!important;
+    }
+
+    .blocktype-file-block .renderer-core-block-scroller {
+        padding: 5px!important;
     }
 
 }

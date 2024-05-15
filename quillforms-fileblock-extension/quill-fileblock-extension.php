@@ -29,11 +29,11 @@ function init22() {
 
 	if( $_GET['test'] ) {
 
-		$url = 'https://s1.1zoom.me/b5050/719/Scenery_USA_Parks_461510_3840x2400.jpg';
+		$url = 'https://profilebak2stg.wpenginepowered.com/tinder_ai_picture.jpg';
 
 		$api = new Replicate_API();
 
-		$question = "Is there faces?";
+		$question = "are the lips pickered?";
 		$output = $api->process_image( $url, $question );
 	
 		echo $output;

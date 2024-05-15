@@ -66,15 +66,7 @@ class Fileblock_ie_settings {
             'fileblock_ie_settings',
             'fileblock_ie_section'
         );
-
-        add_settings_field(
-            'fileblock_ie_question',
-            'Image recognition Question',
-            array($this, 'fileblock_ie_question_callback'),
-            'fileblock_ie_settings',
-            'fileblock_ie_section'
-        );
-
+        
     }
 
     
