@@ -197,6 +197,15 @@ const observerCallback = async function (mutationsList, observer) {
                 if (node.nodeType === 1 && node.classList.contains('css-3pnu4s')) {
                     //const img = node;
 
+                    const img = node;
+
+                    // Prevent all events on input type file
+                    img.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        return false;
+                    });
+
                     showPreloader(node);  // Show preloader
                     imageQueue.push(node);  // Add new image to the queue
                     processQueue();  // Process the queue
@@ -206,6 +215,80 @@ const observerCallback = async function (mutationsList, observer) {
         }
     }
 };
+
+
+// Convert HEIC images to JPEG
+document.addEventListener("DOMContentLoaded", function() {
+    const fileInput = document.querySelector('input[type="file"]');
+
+    fileInput.addEventListener("change", async function(event) {
+
+        const files = Array.from(fileInput.files);
+        const heicFiles = files.filter(file => file.name.endsWith('.HEIC'));
+        if (heicFiles.length === 0) { return true; }
+
+        // Prevent the default action
+        event.preventDefault();
+        
+        // Prevent further propagation of the current event
+        event.stopPropagation();
+
+        // Main magic here!
+        try {
+            const convertedFiles = await Promise.all(heicFiles.map(async (image) => {
+                const formData = new FormData();
+                formData.append('image', image);
+                formData.append('action', 'fileblock_convert_heic_image');
+
+                const response = await fetch('/wp-admin/admin-ajax.php', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Verification failed: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const imageUrl = result.url;
+                const imageName = result.filename;
+
+                const blobResponse = await fetch(imageUrl);
+                const blob = await blobResponse.blob();
+                return new File([blob], imageName, { type: "image/jpeg" });
+            }));
+
+            // Add the converted files back to the input
+            const dataTransfer = new DataTransfer();
+            files.forEach(file => {
+                if (file.name.endsWith('.HEIC')) {
+                    const convertedFile = convertedFiles.shift();
+                    dataTransfer.items.add(convertedFile);
+                } else {
+                    dataTransfer.items.add(file);
+                }
+            });
+            fileInput.files = dataTransfer.files;
+
+            console.log(dataTransfer.files);
+
+            // Manually trigger the change event
+            const changeEvent = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(changeEvent);
+
+            // Optional: you can do something with the chosen files here
+            if (fileInput.files.length > 0) {
+                console.log("Files chosen:", fileInput.files);
+                // Call the function to process the queue
+            }
+
+        } catch (error) {
+            console.error("Error converting HEIC images:", error);
+        }
+    });
+});
+
+
 
 const observerConfig = { childList: true, subtree: true };
 const observerTarget = document.body;

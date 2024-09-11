@@ -13,6 +13,7 @@ class Fileblock_ie {
         require_once( FILEBLOCK_IE_PLUGIN_DIR_ABS.'/classes/replicate.api.php' );
         require_once( FILEBLOCK_IE_PLUGIN_DIR_ABS.'/classes/admin.settings.php' );
         require_once( FILEBLOCK_IE_PLUGIN_DIR_ABS.'/classes/helper.files.php' );
+        require_once( FILEBLOCK_IE_PLUGIN_DIR_ABS.'/classes/helper.class.php' );
 
     }
 

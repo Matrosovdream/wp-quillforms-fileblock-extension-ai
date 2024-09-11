@@ -41,8 +41,6 @@ class Replicate_API {
 
     private function create_prediction( $image_url, $question ) {
 
-        $image = 'data: image/jpeg;base64,' .  base64_encode(file_get_contents( $image_url ));
-
         $url = $this->url;
         $data = array(
             'version' => $this->version,
@@ -50,7 +48,7 @@ class Replicate_API {
                 'task' => 'visual_question_answering',
                 'question' => $question,
                 //'caption' => 'The face is not visible enough',
-                'image' => $image,
+                'image' => $this->prepare_post_image( $image_url )
             )
         );
 
@@ -62,6 +60,25 @@ class Replicate_API {
 
         $url = $this->url.'/'.$prediction_id;
         return $this->query( $url );
+
+    }
+
+    private function prepare_post_image( $image_url ) {
+
+        return 'data: image/jpeg;base64,' .  base64_encode(file_get_contents( $image_url ));
+
+    }
+
+    public function verify_url( $url ) {
+
+        if( 
+            !filter_var($url, FILTER_VALIDATE_URL) ||
+            !is_readable( $url ) 
+            ) { 
+            return false;
+        }
+
+        return true;
 
     }
 
@@ -87,19 +104,6 @@ class Replicate_API {
         curl_close($ch);
 
         return json_decode($result, true);
-
-    }
-
-    public function verify_url( $url ) {
-
-        if( 
-            !filter_var($url, FILTER_VALIDATE_URL) ||
-            !is_readable( $url ) 
-            ) { 
-            return false;
-        }
-
-        return true;
 
     }
 

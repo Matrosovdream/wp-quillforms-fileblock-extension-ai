@@ -175,3 +175,21 @@ body {
     }
 
 }
+
+@media (min-width: 767px) {
+
+  .css-1pl97n7 {
+    width: 300px!important;
+  }
+
+}
+
+.css-rudj5u {
+  /*padding-bottom: 70px;*/
+}
+
+
+.css-yem9og {
+  /*position: relative!important;*/
+  /*overflow: scroll!important;*/
+}

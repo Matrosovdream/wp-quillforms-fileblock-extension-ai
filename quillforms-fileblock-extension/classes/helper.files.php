@@ -31,6 +31,11 @@ class Replicate_helper_blobs {
         $filename = time().'.'.$this->file_extension;
         $folder = $this->tmp_folder;
 
+        // Create folder if it doesn't exist
+        if (!file_exists( $_SERVER['DOCUMENT_ROOT'].$folder )) {
+            mkdir( $_SERVER['DOCUMENT_ROOT'].$folder, 0777, true);
+        }
+
         $path_abs = $_SERVER['DOCUMENT_ROOT'].$folder.$filename;
         $image_url = 'https://'.$_SERVER['SERVER_NAME'].$folder.$filename;
 

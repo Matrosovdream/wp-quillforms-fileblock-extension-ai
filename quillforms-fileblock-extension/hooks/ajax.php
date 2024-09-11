@@ -48,6 +48,34 @@ function fileblock_verify_image_func() {
 }
 
 
+add_action('wp_ajax_fileblock_convert_heic_image', 'fileblock_convert_heic_image_func');
+add_action('wp_ajax_nopriv_fileblock_convert_heic_image', 'fileblock_convert_heic_image_func');
+function fileblock_convert_heic_image_func() {
+    if ($_FILES && $_FILES["image"]["error"] == UPLOAD_ERR_OK) {
+
+        $image = $_FILES["image"]["tmp_name"];
+
+        $filename = str_replace( '.HEIC', '.jpeg', $_FILES["image"]["name"] );
+        $destination = wp_upload_dir()["path"] . "/" . $filename;
+        $image_url = wp_upload_dir()["url"] . "/" . $filename;
+
+        // Convert HEIC image to JPEG using Imagick
+        $imagick = new Imagick($image);
+        $imagick->setImageFormat("jpeg");
+        $imagick->writeImage($destination);
+
+        // Return final URL
+        echo json_encode(array("url" => $image_url, "filename" => $filename));
+    } else {
+        $data = array("error" => true, "message" => "Error occurred");
+        echo json_encode($data);
+    }
+
+    exit();
+}
+
+
+
 add_action('wp_enqueue_scripts', 'localize_script');
 function localize_script() {
     wp_localize_script('your-script-handle', 'ajax_object', array('ajax_url' => admin_url('admin-ajax.php')));
