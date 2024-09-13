@@ -1,28 +1,29 @@
 async function verifyImageAjax(url, question) {
+    const cacheKey = `${url}_${question}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        return JSON.parse(cached);
+    }
+    
     try {
         const res = await fetch(url);
-        if (!res.ok) {
-            throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`);
-        }
+        if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
         const blob = await res.blob();
-        const type = blob.type;
-
         const formData = new FormData();
         formData.append('image', blob, 'filename.jpg');
-        formData.append('image_type', type);
+        formData.append('image_type', blob.type);
         formData.append('action', 'fileblock_verify_image');
         formData.append('question', question);
-
+        
         const response = await fetch('/wp-admin/admin-ajax.php', {
             method: 'POST',
             body: formData,
         });
-
-        if (!response.ok) {
-            throw new Error(`Verification failed: ${response.status} ${response.statusText}`);
-        }
-
+        
+        if (!response.ok) throw new Error(`Verification failed: ${response.status}`);
+        
         const result = await response.json();
+        localStorage.setItem(cacheKey, JSON.stringify(result.result));
         return result.result;
     } catch (error) {
         console.error('Error:', error);
@@ -30,100 +31,71 @@ async function verifyImageAjax(url, question) {
     }
 }
 
+let debounceTimer;
+
+// Debounced Verification Function
 async function verifyQuestions(img) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+        try {
+            // Show preloader or loading indicator
+            showPreloader(img);
 
-    try {
-        // First check for multiple faces
-        const facesCount = await verifyImageAjax(img.src, 'how many close up faces do you see?');
-        if (Number(facesCount) > 1) {
-            // More than one close-up face detected, skip further checks and show message
-            addVerificationMessage(img, 'For best results use an image', 'with only one face visible');
-        } else {
-
-            /*
-            var isScreenshot = await verifyImageAjax(img.src, 'Is it a screenshot?');
-            if( isScreenshot == 'yes' ) {
-                addVerificationMessage(img, 'Probably not the best. Why?', 'screenshot');
-                return;
-            }
-            */
-
-            var isPerson = await verifyImageAjax(img.src, 'Is there a person in the picture?');
-            if( isPerson == 'no' ) {
-                addVerificationMessage(img, 'For best results use an image', 'with the face clearly visible');
+            // Critical Question: "How many eyes do you see?"
+            const eyesCount = await verifyImageAjax(img.src, 'How many eyes do you see?');
+            if (Number(eyesCount) > 2) {
+                addVerificationMessage(img, 'Check if there is really only 1 person');
                 return;
             }
 
-            // If not more than one face, proceed with other verifications
-            const promises = [
-                verifyImageAjax(img.src, 'Are the lips pickered?'),
-                verifyImageAjax(img.src, 'Does the person wear sunglasses?'),
-                verifyImageAjax(img.src, 'Is it an official document?'),
-                verifyImageAjax(img.src, 'Is the head covered?'),
-                //verifyImageAjax(img.src, 'Is there a person in the picture?'),
-                verifyImageAjax(img.src, 'Is the image blurry?'),
+            // Cascade of Prioritized Questions
+            const questions = [
+                { question: 'Is the image blurry?', key: 'blurry' },
+                { question: 'Is the head covered?', key: 'head_covered' },
+                { question: 'Are the lips pickered?', key: 'lips_pickered' },
+                { question: 'Is the person wearing sunglasses?', key: 'sunglasses' }
             ];
 
-            const outputs = await Promise.all(promises);
+            const tooltips = [];
+            let message = '✅';
 
-            var tooltips = [];
-            var message = '';
-            outputs.forEach((output, index) => {
-                if (output !== null) {
-                    switch (index) {
-                        case 0:
-                            if (output === 'yes') {
-                                tooltips.push('with natural expression, no grimaces');
-                                message = 'For best results use an image';
-                            }
+            for (const item of questions) {
+                const answer = await verifyImageAjax(img.src, item.question);
+                if (answer === 'yes') {
+                    switch (item.key) {
+                        case 'blurry':
+                            tooltips.push('Blurry image');
+                            message = 'Please use a clearer image.';
                             break;
-                        case 1:
-                            if (output === 'yes') {
-                                tooltips.push('without sunglasses');
-                                message = 'For best results use an image';
-                            }
+                        case 'head_covered':
+                            tooltips.push('Head is covered');
+                            message = 'Ensure your head is uncovered.';
                             break;
-                        case 2:
-                            if (output === 'yes') {
-                                tooltips.push('not a document or other');
-                                message = 'For best results use an image';
-                            }
+                        case 'lips_pickered':
+                            tooltips.push('Lips are pickered');
+                            message = 'Use an image with natural expressions.';
                             break;
-                        case 3:
-                            if (output === 'yes') {
-                                tooltips.push('with your face and head uncovered');
-                                message = 'For best results use an image';
-                            }
+                        case 'sunglasses':
+                            tooltips.push('Wearing sunglasses');
+                            message = 'Remove sunglasses for best results.';
                             break;
-                        case 4:
-                            if (output === 'yes') {
-                                tooltips.push('Blurry image');
-                                message = 'Probably not the best. Why?';
-                            }
-                            break;
-                        case 5:
-                        
                     }
+                    break; // Stop after the first failed check
                 }
-            });
+            }
 
-            //tooltips = [];
-            //console.log( tooltips.length );
-
-            if( tooltips.length == 0 ) {
+            if (tooltips.length === 0) {
                 message = '✅';
             }
 
-            tooltips = tooltips.filter(onlyUnique);
-
             addVerificationMessage(img, message, tooltips.join(', '));
+        } catch (error) {
+            console.error('Verification error:', error);
+            addVerificationMessage(img, 'Error during verification. Please try again.');
+        } finally {
+            removePreloader(img);
         }
-    } catch (error) {
-        console.error('Verification error:', error);
-    } finally {
-        removePreloader(img);
-        //removeElementById("image-loading");
-    }
+    }, 300); // 300ms debounce delay
 }
 
 
@@ -132,48 +104,24 @@ function onlyUnique(value, index, array) {
 }
 
 
-function addVerificationMessage(element, message, tooltip) {
-    
-    // Create a div element with class "omg"
-    const divElement = document.createElement('div');
-    divElement.classList.add('omg');
-
-    // Create an abbr element with the specified title and class
-    const abbrElement = document.createElement('p');
-    //abbrElement.title = tooltip;
-    //abbrElement.rel = 'tooltip';
-
-    if( tooltip == '' ) {
-        abbrElement.classList.add('image-ok');
-    } else {
-        //abbrElement.classList.add('dotted-underline');
+function addVerificationMessage(img, message, tooltip = '') {
+    // Remove existing message if any
+    const existingMessage = img.parentElement.querySelector('.verification-message');
+    if (existingMessage) {
+        existingMessage.remove();
     }
 
-    abbrElement.textContent = message; // Set the text content to the provided message
+    // Create message element
+    const msgElement = document.createElement('span');
+    msgElement.className = 'verification-message';
+    msgElement.textContent = message;
 
-    // Append the abbr element to the div element
-    divElement.appendChild(abbrElement);
+    if (tooltip) {
+        msgElement.title = tooltip;
+        msgElement.classList.add('dotted-underline'); // Assuming this class styles the tooltip
+    }
 
-
-    // Create an abbr element with the specified title and class
-    const abbrElement2 = document.createElement('div');
-    abbrElement2.title = tooltip;
-    //abbrElement2.rel = 'tooltip';
-    abbrElement2.classList.add('tooltip');
-    abbrElement2.textContent = tooltip; // Set the text content to the provided message
-
-    // Append the abbr element to the div element
-    divElement.appendChild(abbrElement2);
-
-
-
-    // Insert the div element after the specified element
-    element.parentNode.insertBefore(divElement, element.nextSibling);
-
-    // Find the specific block element (ver_block) and insert the div element after it
-    var ver_block = element.parentNode.parentNode.parentNode.getElementsByClassName('css-1iy0o1t')[0];
-    ver_block.parentNode.insertBefore(divElement, ver_block.nextSibling);
-
+    img.parentElement.appendChild(msgElement);
 }
 
 const imageQueue = [];  // Queue to store images to be processed

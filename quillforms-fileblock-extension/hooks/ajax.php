@@ -1,50 +1,48 @@
 <?php
 add_action('wp_ajax_fileblock_verify_image', 'fileblock_verify_image_func');
 add_action('wp_ajax_nopriv_fileblock_verify_image', 'fileblock_verify_image_func');
+
 function fileblock_verify_image_func() {
 
-    if ($_FILES && $_FILES["image"]["error"]== UPLOAD_ERR_OK)
-    {
+    // Validate and sanitize inputs
+    if ( ! isset($_POST['question']) || empty($_POST['question']) ) {
+        wp_send_json_error( array( "message" => "No question provided." ) );
+    }
+    if ( ! isset($_FILES["image"]) || $_FILES["image"]["error"] !== UPLOAD_ERR_OK ) {
+        wp_send_json_error( array( "message" => "Error occurred during file upload." ) );
+    }
 
-        // $_FILES["image"]
-        $blob = new Replicate_helper_blobs( "image", $_POST['image_type'] );
+    // Initialize helper
+    $blob = new Replicate_helper_blobs( "image", $_POST['image_type'] );
 
-        // We take just images
-        if( !$blob->check_type() ) { return true; }
+    // Validate image type
+    if( !$blob->check_type() ) { 
+        wp_send_json_error( array( "message" => "Invalid image type." ) );
+    }
 
-        // Return error if the image wasn't uploaded
-        if( !$blob->upload_file() ) {
-            $data = array( "error" => true, "message" => "Error occured" );
-            echo json_encode( $data );
-        }
-        
-        // Send to Replicate API
-        $api = new Replicate_API();
+    // Upload the image
+    if( !$blob->upload_file() ) {
+        wp_send_json_error( array( "message" => "Failed to upload image." ) );
+    }
 
-        //$question = get_option('fileblock_ie_question');
-        $question = $_POST['question'];
-		$output = $api->process_image( $blob->image_url, $question );
+    // Initialize Replicate API
+    $api = new Replicate_API();
 
-        $answer = explode('Answer: ', $output)[1];
+    // Retrieve and sanitize the question
+    $question = sanitize_text_field( $_POST['question'] );
+    $output = $api->process_image( $blob->image_url, $question );
+
+    if ( $output ) {
+        $answer = isset(explode('Answer: ', $output)[1]) ? explode('Answer: ', $output)[1] : $output;
         $data = array( 
             "question" => $question,
             "result" => $answer,
             "url" => $blob->image_url, 
         );
-
-        echo json_encode( $data );
-
-        // Don't keep traces
-        $blob->remove_file();
-        
-        //echo $image_url;
-
+        wp_send_json_success( $data );
     } else {
-        $data = array( "error" => true, "message" => "Error occured" );
-        echo json_encode( $data );
+        wp_send_json_error( array( "message" => "Verification timed out." ) );
     }
-
-    exit();
 }
 
 

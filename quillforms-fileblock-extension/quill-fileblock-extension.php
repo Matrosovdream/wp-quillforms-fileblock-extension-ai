@@ -4,8 +4,7 @@
  * Plugin URI:        
  * Description:       Extension checks uploaded images for face verification
  * Version:           1.0.0
- * Author:            Stan Matrosov
- * Author URI:        https://github.com/matrosovdream
+ * Author:            Stan & Mitch
  * Text Domain:       quillforms-fileblock
  */
 
